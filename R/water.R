@@ -11,8 +11,7 @@
 #' @param \dots Further arguments passed as query parameters in request sent to EPA ECHO's API. For more options see: \url{https://echo.epa.gov/tools/web-services/facility-search-water#!/Facility_Information/get_cwa_rest_services_get_facility_info} for a complete list of parameter options. Examples provided below.
 #' @return returns a dataframe or simple features dataframe
 #' @import httr
-#' @import jsonlite
-#' @import sf
+#' @importFrom geojsonsf geojson_sf
 #'
 #' @export
 #' @examples \donttest{
@@ -34,7 +33,8 @@
 #'
 #' }
 #'
-echoWaterGetFacilityInfo <- function(output = "df", verbose = FALSE, ...) {
+echoWaterGetFacilityInfo <- function(output = "df",
+                                     verbose = FALSE, ...) {
     if (length(list(...)) == 0) {
         stop("No valid arguments supplied")
     }
@@ -45,68 +45,71 @@ echoWaterGetFacilityInfo <- function(output = "df", verbose = FALSE, ...) {
     ## out
     valuesList <- exclude(valuesList, "output")
 
+    ## check if qcolumns argument is provided by user
+    ## if user does not provide qcolumns, provide a sensible default
+    if (!("qcolumns" %in% names(valuesList))) {
+      qcolumns <- c(1:11,14,23,24,25,26,30,36,58,60,63,64,65,67,86,206)
+      qcolumns <- paste(as.character(qcolumns), collapse = ",")
+      valuesList[["qcolumns"]] <- qcolumns
+    }
+
+    # check if 1 and 2 are in, if not, insert and order
+    valuesList <- insertQColumns(valuesList)
+
     ## generate query the will be pasted into GET URL
     queryDots <- queryList(valuesList)
 
-    if (output == "df") {
+    ## build the request URL statement
+    path <- "echo/cwa_rest_services.get_facility_info"
+    query <- paste("output=JSON", queryDots, sep = "&")
+    getURL <- requestURL(path = path, query = query)
 
-        ## build the request URL statement
-        path <- "echo/cwa_rest_services.get_facility_info"
-        query <- paste("output=JSON", queryDots, sep = "&")
-        getURL <- requestURL(path = path, query = query)
+    ## Make the request
+    request <- httr::GET(getURL, httr::accept_json())
 
-        ## Make the request
-        request <- GET(getURL, accept_json())
-
-        ## Print status message, need to make this optional
-        if (verbose) {
-            message("Request URL:", getURL)
-            message(http_status(request))
-        }
-
-        info <- content(request)
-
-        ## build the output
-
-        # return a list of lengths
-        len <- purrr::map(info[["Results"]][["Facilities"]], length)
-
-        # if a different number of columns is returned per plant, we want to map
-        # values to the longest
-        maxIndex <- which.max(len)
-        # this might fail if a entirely different columns are returned. Need to
-        # find out if there is some consisteny in the returned columns
-
-        cNames <- names(info[["Results"]][["Facilities"]][[maxIndex]])
-
-        ## create the output dataframe
-        buildOutput <- purrr::map_df(info[["Results"]][["Facilities"]],
-                                     safe_extract, cNames)
-        return(buildOutput)
+    ## Print status message
+    if (isTRUE(verbose)) {
+      message("The formatted URL is: ", getURL)
+      message(httr::http_status(request))
     }
 
-    if (output == "sf") {
+    info <- httr::content(request)
 
-        ## build the request URL statement
-        path <- "echo/cwa_rest_services.get_facility_info"
-        query <- paste("output=GEOJSON", queryDots, sep = "&")
-        getURL <- requestURL(path = path, query = query)
+    qid <- info[["Results"]][["QueryID"]]
 
-        ## Make the request
-        request <- GET(getURL, accept_json())
+    ## build the output
 
-        ## Print status message, need to make this optional
-        if (verbose) {
-            message("Request URL:", getURL)
-            message(http_status(request))
+    ## get qcolumns argument specific to this query
+    qcolumns <- queryList(valuesList["qcolumns"])
+
+    ## Find out column types
+    colNums <- unlist(strsplit(valuesList[["qcolumns"]], split = ","))
+    colNums <- as.numeric(colNums)
+
+    colTypes <- columnsToParse(program = "cwa", colNums)
+
+    ## if df return output from air_rest_services.get_download
+    if (output == "df") {
+
+               buildOutput <- getDownload("cwa",
+                                   qid,
+                                   qcolumns,
+                                   col_types = colTypes)
+        return(buildOutput)
+
         }
 
-        ## Download GeoJSON as text
-        buildOutput <- content(request, as = "text")
+    ## if df return output from air_rest_services.get_geojson
+    if (output == "sf") {
 
-        ## Convert to sf dataframe
-        buildOutput <- convertSF(buildOutput)
-        return(buildOutput)
+      buildOutput <- getGeoJson("cwa",
+                                qid,
+                                qcolumns)
+      ## Convert to sf dataframe
+      buildOutput <- geojsonsf::geojson_sf(buildOutput)
+
+      return(buildOutput)
+
     } else {
         stop("output argument = ", output,
              ", when it should be either 'df' or 'sf'")
@@ -114,17 +117,63 @@ echoWaterGetFacilityInfo <- function(output = "df", verbose = FALSE, ...) {
 
 }
 
+# echoWaterGetMeta ============================================================
+
+#' Downloads EPA ECHO Water Facility Metadata
+#'
+#' Returns variable name and descriptions for parameters returned by \code{\link{echoWaterGetFacilityInfo}}
+#' @param verbose Logical, indicating whether to provide processing and retrieval messages. Defaults to FALSE
+#'
+#' @return returns a dataframe
+#' @import httr
+#' @importFrom purrr map_df
+#' @export
+#'
+#' @examples \donttest{
+#' ## These examples require an internet connection to run
+#'
+#' # returns a dataframe of
+#' echoWaterGetMeta()
+#' }
+echoWaterGetMeta <- function(verbose = FALSE){
+
+  ## build the request URL statement
+  path <- "echo/cwa_rest_services.metadata?output=JSON"
+  getURL <- requestURL(path = path, query = NULL)
+
+  ## Make the request
+  request <- httr::GET(getURL, httr::accept_json())
+
+  ## Print status message, need to make this optional
+  if (isTRUE(verbose)) {
+    message("Request URL:", getURL)
+    message(httr::http_status(request))
+  }
+
+  info <- httr::content(request)
+  info
+
+  ## build the output
+  buildOutput <- purrr::map_df(info[["Results"]][["ResultColumns"]],
+                               safe_extract,
+                               c("ColumnName", "DataType", "DataLength",
+                                 "ColumnID", "ObjectName", "Description"))
+
+  return(buildOutput)
+}
+
 
 # echoGetEffluent =========================================================
 
 
 #' Downloads EPA ECHO DMR records of dischargers with NPDES permits
-#' @import httr
-#' @import jsonlite
-#' @import tibble
 #' @param p_id Character string specify the identifier for the service. Required.
 #' @param verbose Logical, indicating whether to provide processing and retrieval messages. Defaults to FALSE
 #' @param ... Further arguments passed on as query parameters sent to EPA's ECHO API. For more options see: \url{https://echo.epa.gov/tools/web-services/effluent-charts#!/Effluent_Charts/get_eff_rest_services_get_effluent_chart}
+#' @import httr
+#' @importFrom lubridate dmy
+#' @importFrom purrr map map_chr
+#' @importFrom tibble tibble
 #' @return Returns a dataframe.
 #' @export
 #'
@@ -155,14 +204,14 @@ echoGetEffluent <- function(p_id, verbose = FALSE, ...) {
     query <- paste(p_id, queryDots, "output=JSON", sep = "&")
     getURL <- requestURL(path = path, query = query)
 
-    request <- GET(getURL, accept_json())
+    request <- httr::GET(getURL, httr::accept_json())
 
-    if (verbose) {
-        message("Request URL:", getURL)
-        message(http_status(request))
+    if (isTRUE(verbose)) {
+      message("Request URL:", getURL)
+      message(httr::http_status(request))
     }
 
-    info <- content(request)
+    info <- httr::content(request)
 
     ## Obtain permit information used to make the dataframe
     CWPName <- info[["Results"]][["CWPName"]]
@@ -243,8 +292,7 @@ echoGetEffluent <- function(p_id, verbose = FALSE, ...) {
 #'
 #' Returns a dataframe of parameter codes and descriptions.
 #' @import httr
-#' @import jsonlite
-#' @import tibble
+#' @importFrom purrr map_df
 #' @importFrom utils URLencode
 #'
 #' @param term Character string specifying the parameter search term. Partial or complete search phrase or word.
@@ -284,21 +332,21 @@ echoWaterGetParams <- function(term = NULL, code = NULL, verbose = FALSE){
     }
     else{
       ## build the request URL statement for term argument
-      term <- URLencode(term, reserved = TRUE)
+      term <- utils::URLencode(term, reserved = TRUE)
       term <- paste0("search_term=", term)
       query <- paste("output=JSON", term, sep = "&")
       getURL <- requestURL(path = path, query = query)
     }
   }
 
-  request <- GET(getURL, accept_json())
+  request <- httr::GET(getURL, httr::accept_json())
 
-  if (verbose) {
+  if (isTRUE(verbose)) {
     message("Request URL:", getURL)
-    message(http_status(request))
+    message(httr::http_status(request))
   }
 
-  info <- content(request)
+  info <- httr::content(request)
 
   buildOutput <- purrr::map_df(info[["Results"]][["LuValues"]],
                                safe_extract,

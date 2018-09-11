@@ -44,6 +44,14 @@ exclude <- function(list, names) {
 # data wrangling ----------------------------------------------------------
 
 ## handle NULLs,  Pulled from JennyBC's purrr tutorial originally from Zev Ross
+
+#' Safely handle nulls
+#'
+#' @param l list
+#' @param wut element
+#' @importFrom purrr map_lgl
+#' @keywords internal
+#' @noRd
 safe_extract <- function(l, wut) {
     res <- l[wut]
     null_here <- purrr::map_lgl(res, is.null)
@@ -61,7 +69,7 @@ safe_extract <- function(l, wut) {
 #'
 #' @param path Character vector, specifies API path to ECHO's webservices
 #' @param query Character vector, specifies the parameters sent in the GET request
-#'
+#' @importFrom httr build_url
 #' @return URL used in the httr call
 #' @keywords internal
 #' @noRd
@@ -70,25 +78,130 @@ requestURL <- function(path, query) {
     urlBuildList <- structure(list(scheme = "https",
                                    hostname = "ofmpub.epa.gov",
         port = NULL, path = path, query = query), class = "url")
-    return(build_url(urlBuildList))
+    return(httr::build_url(urlBuildList))
 }
 
-
-# Convert to sf -----------------------------------------------------------
-
-## reads geojson in and produce the sf dataframe
-#' Convert from geojson string to sf dataframe
+#' Returns comma deliminated data from get.download endpoints
 #'
-#' @param x character vector, of geojson format
+#' @param service character string. One of "sdw", "cwa", or "caa"
+#' @param qid character string. Query identifier.
+#' @param qcolumns character string, specifies columns returned in query.
+#' @param col_types One of NULL, a cols() specification, or a string.
 #'
-#' @return simple features dataframe
-#' @importFrom sf read_sf
+#' @return Returns a dataframe
+#' @import httr
+#' @importFrom readr read_csv locale
 #' @keywords internal
 #' @noRd
-convertSF <- function(x) {
+getDownload <- function(service, qid, qcolumns, col_types = NULL) {
+  ## build the request URL statement
+  if (service == "sdw") {
+  path <- "echo/sdw_rest_services.get_download"
+  } else if (service == "cwa") {
+    path <- "echo/cwa_rest_services.get_download"
+  } else if (service == "caa") {
+    path <- "echo/air_rest_services.get_download"
+  } else {
+    stop("internal error in getDownload, incorrect service argument supplied")
+  }
+  qid <- paste0("qid=", qid)
+  query <- paste(qid, qcolumns, sep = "&")
+  getURL <- requestURL(path = path, query = query)
 
-  t <- tempfile("spoutput", fileext = ".geojson")
-  write(x, t)
-  output <- read_sf(t)
-  return(output)
+  ## Make the request
+  request <- httr::GET(getURL)
+
+  info <- httr::content(request, as = "raw")
+
+  info <- readr::read_csv(info, col_names = TRUE,
+                  col_types = col_types,
+                  na = " ",
+                  locale = readr::locale(date_format = "%m/%d/%Y"))
+
+  return(info)
 }
+
+#' Returns geojson from get.geojson endpoints
+#'
+#' @param service character string. One of "cwa", or "caa"
+#' @param qid character string. Query identifier.
+#' @param qcolumns character string, specifies columns returned in query.
+#'
+#' @return Returns a dataframe
+#' @import httr
+#' @importFrom readr read_csv locale
+#' @keywords internal
+#' @noRd
+getGeoJson <- function(service, qid, qcolumns) {
+  ## build the request URL statement
+  if (service == "cwa") {
+    path <- "echo/cwa_rest_services.get_geojson"
+  } else if (service == "caa") {
+    path <- "echo/air_rest_services.get_geojson"
+  } else {
+    stop("internal error in getDownload, incorrect service argument supplied")
+  }
+  qid <- paste0("qid=", qid)
+  query <- paste(qid, qcolumns, sep = "&")
+  getURL <- requestURL(path = path, query = query)
+
+  ## Make the request
+  request <- httr::GET(getURL)
+
+  info <- httr::content(request, as = "text", encoding = "UTF-8")
+
+  return(info)
+}
+
+# Clean up qcolumns ------------------------------------------------------
+
+insertQColumns <- function(valuesList) {
+
+  qcolumns <- unlist(strsplit(valuesList[["qcolumns"]], split = ","))
+  # unlist qcolumns into a numeric vector
+  # check if 1 and 2 are in, if not, insert and order
+  if (!1 %in% qcolumns) { qcolumns <- append(qcolumns, 1)}
+  if (!2 %in% qcolumns) { qcolumns <- append(qcolumns, 2)}
+  qcolumns <- as.character(sort(as.numeric(qcolumns)))
+
+  qcolumns <- paste(as.character(qcolumns), collapse = ",")
+
+  valuesList[["qcolumns"]] <- qcolumns
+
+  return(valuesList)
+}
+
+
+
+
+# Specify column types to parse -------------------------------------------
+
+#' Create character vector to parse columns
+#'
+#' @param program character
+#' @param colNums qcolumns
+#'
+#' @import httr
+#' @importFrom plyr mapvalues
+#' @importFrom purrr map
+#' @noRd
+#' @keywords internal
+columnsToParse <- function(program, colNums) {
+
+  if (program == "caa") {
+    meta <- httr::content(httr::GET(url = "https://ofmpub.epa.gov/echo/air_rest_services.metadata?output=JSON"))
+  } else if (program == "cwa") {
+    meta <- httr::content(httr::GET(url = "https://ofmpub.epa.gov/echo/cwa_rest_services.metadata?output=JSON"))
+  } else if (program == "sdw") {
+    meta <- httr::content(httr::GET(url = "https://ofmpub.epa.gov/echo/sdw_rest_services.metadata?output=JSON"))
+  } else {
+    stop("Incorrect argument specified in columnsToParse(). program should be a character == to 'caa', 'cwa', or 'sdw'")}
+
+  col_types <- purrr::map(meta[["Results"]][["ResultColumns"]], "DataType")[c(colNums)]
+  col_types <- unlist(col_types)
+  col_types <- plyr::mapvalues(col_types, from = c("VARCHAR2", "CHAR", "NUMBER", "DATE"),
+                               to = c("c", "c", "d", "D"),
+                               warn_missing = FALSE)
+  col_types <- paste(col_types, sep = "", collapse = "")
+  return(col_types)
+  }

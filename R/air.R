@@ -5,13 +5,11 @@
 #'
 #' Returns a dataframe or simplefeature dataframe of permitted facilities returned by the query.
 #' Uses EPA's ECHO API: \url{https://echo.epa.gov/tools/web-services/facility-search-air#!/Facilities/get_air_rest_services_get_facility_info}
-#' @import httr
-#' @import jsonlite
-#' @import sf
 #' @param output Character string specifying output format. \code{output = 'df'} for a dataframe or \code{output = 'sf'} for a simple features spatial dataframe. See (\url{https://CRAN.R-project.org/package=sf}) for more information about simple features.
 #' @param verbose Logical, indicating whether to provide processing and retrieval messages. Defaults to FALSE
 #' @param ... Further arguments passed as query parameters in request sent to EPA ECHO's API. For more options see: \url{https://echo.epa.gov/tools/web-services/facility-search-water#!/Facility_Information/get_air_rest_services_get_facility_info} for a complete list of parameter options. Examples provided below.
-#'
+#' @import httr
+#' @importFrom geojsonsf geojson_sf
 #' @return dataframe or sf dataframe suitable for plotting
 #' @export
 #'
@@ -44,68 +42,73 @@ echoAirGetFacilityInfo <- function(output = "df", verbose = FALSE, ...) {
     ## out
     valuesList <- exclude(valuesList, "output")
 
+    ## check if qcolumns argument is provided by user
+    ## if user does not provide qcolumns, provide a sensible default
+    if (!("qcolumns" %in% names(valuesList))) {
+      qcolumns <- c(1:5,22,23)
+      qcolumns <- paste(as.character(qcolumns), collapse = ",")
+      valuesList[["qcolumns"]] <- qcolumns
+    }
+
+    # check if 1 and 2 are in, if not, insert and order
+    valuesList <- insertQColumns(valuesList)
+
     ## generate query the will be pasted into GET URL
     queryDots <- queryList(valuesList)
 
+    ## build the request URL statement
+    path <- "echo/air_rest_services.get_facility_info"
+    query <- paste("output=JSON", queryDots, sep = "&")
+    getURL <- requestURL(path = path, query = query)
+
+    ## Make the request
+    request <- httr::GET(getURL, httr::accept_json())
+
+    ## Print status message, need to make this optional
+    if (isTRUE(verbose)) {
+      message("Request URL:", getURL)
+      message(httr::http_status(request))
+    }
+
+    info <- httr::content(request)
+
+    qid <- info[["Results"]][["QueryID"]]
+
+    ## build the output
+
+    ## get qcolumns argument specific to this query
+    qcolumns <- queryList(valuesList["qcolumns"])
+
+    ## Find out column types so they are parsed correctly
+    colNums <- unlist(strsplit(valuesList[["qcolumns"]], split = ","))
+    colNums <- as.numeric(colNums)
+
+    colTypes <- columnsToParse(program = "caa", colNums)
+
+    ## if df return output from air_rest_services.get_download
     if (output == "df") {
 
-      ## build the request URL statement
-      path <- "echo/air_rest_services.get_facility_info"
-      query <- paste("output=JSON", queryDots, sep = "&")
-      getURL <- requestURL(path = path, query = query)
 
-        ## Make the request
-        request <- GET(getURL, accept_json())
-
-        ## Print status message, need to make this optional
-        if (verbose) {
-          message("Request URL:", getURL)
-          message(http_status(request))
+        buildOutput <- getDownload("caa",
+                                   qid,
+                                   qcolumns,
+                                   col_types = colTypes)
+        return(buildOutput)
         }
 
-        info <- content(request)
-
-        ## build the output
-
-        # return a list of lengths
-        len <- purrr::map(info[["Results"]][["Facilities"]], length)
-
-        # if a different number of columns is returned per plant, we want to map
-        # values to the longest
-        maxIndex <- which.max(len)
-        # this might fail if a entirely different columns are returned. Need to
-        # find out if there is some consisteny in the returned columns
-
-        cNames <- names(info[["Results"]][["Facilities"]][[maxIndex]])
-
-        ## create the output dataframe
-        buildOutput <- purrr::map_df(info[["Results"]][["Facilities"]],
-                                     safe_extract, cNames)
-        return(buildOutput)
-    }
-
+    ## if df return output from air_rest_services.get_geojson
     if (output == "sf") {
 
-        ## build the request URL statement
-        path <- "echo/air_rest_services.get_facility_info"
-        query <- paste("output=GEOJSON", queryDots, sep = "&")
-        getURL <- requestURL(path = path, query = query)
+      buildOutput <- getGeoJson("caa",
+                                qid,
+                                qcolumns)
+      ## Convert to sf dataframe
+      buildOutput <- geojsonsf::geojson_sf(buildOutput)
 
-        ## Make the request
-        request <- GET(getURL, accept_json())
+      return(buildOutput)
 
-        ## Print status message, need to make this optional
-        print(paste("# Status message:", http_status(request)))
+      }
 
-        ## Download GeoJSON as text
-        buildOutput <- content(request, as = "text")
-
-        ## Convert to sf dataframe
-        buildOutput <- convertSF(buildOutput)
-
-        return(buildOutput)
-
-    }
     else {
       stop("output argument = ", output,
            ", when it should be either 'df' or 'sf'")
@@ -113,20 +116,63 @@ echoAirGetFacilityInfo <- function(output = "df", verbose = FALSE, ...) {
 
 }
 
+# echoAirGetMeta ============================================================
+
+#' Downloads EPA ECHO Air Facility Metadata
+#'
+#' Returns variable name and descriptions for parameters returned by \code{\link{echoAirGetFacilityInfo}}
+#' @param verbose Logical, indicating whether to provide processing and retrieval messages. Defaults to FALSE
+#' @import httr
+#' @importFrom purrr map_df
+#' @return returns a dataframe
+#' @export
+#'
+#' @examples \donttest{
+#' ## These examples require an internet connection to run
+#'
+#' # returns a dataframe of
+#' echoAirGetMeta()
+#' }
+echoAirGetMeta <- function(verbose = FALSE){
+
+  ## build the request URL statement
+  path <- "echo/air_rest_services.metadata?output=JSON"
+  getURL <- requestURL(path = path, query = NULL)
+
+  ## Make the request
+  request <- httr::GET(getURL, httr::accept_json())
+
+  ## Print status message, need to make this optional
+  if (isTRUE(verbose)) {
+    message("Request URL:", getURL)
+    message(httr::http_status(request))
+  }
+
+  info <- httr::content(request)
+  info
+
+  ## build the output
+  buildOutput <- purrr::map_df(info[["Results"]][["ResultColumns"]],
+                               safe_extract,
+                               c("ColumnName", "DataType", "DataLength",
+                                 "ColumnID", "ObjectName", "Description"))
+
+  return(buildOutput)
+}
 
 
 # echoGetcaapr ------------------------------------------------------------
 
 #' Download EPA ECHO emissions inventory report data
 #'
-#' @import httr
-#' @import jsonlite
-#' @import tibble
-#' @import dplyr
 #' @param p_id character string specify the identifier for the service. Required.
 #' @param verbose Logical, indicating whether to provide processing and retrieval messages. Defaults to FALSE
 #' @param ... Additional arguments
-#'
+#' @importFrom purrr map_df
+#' @importFrom tidyr gather_
+#' @importFrom tibble tibble
+#' @import httr
+#' @import dplyr
 #' @return dataframe
 #' @export
 #'
@@ -163,14 +209,14 @@ echoGetCAAPR <- function(p_id, verbose = FALSE, ...) {
     query <- paste(p_id, queryDots, "output=JSON", sep = "&")
     getURL <- requestURL(path = path, query = query)
 
-    request <- GET(getURL, accept_json())
+    request <- httr::GET(getURL, httr::accept_json())
 
-    if (verbose) {
-        message("Request URL:", getURL)
-        message(http_status(request))
+    if (isTRUE(verbose)) {
+      message("Request URL:", getURL)
+      message(httr::http_status(request))
     }
 
-    info <- content(request)
+    info <- httr::content(request)
 
     ## Emissions data is provided in wide format
     pollutant <- purrr::map_df(
