@@ -1,7 +1,7 @@
 Package: echor
 Type: Package
 Title: Access EPA 'ECHO' Data
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: person("Michael", "Schramm", role = c("aut", "cre"), email = "michael.schramm@ag.tamu.edu")
 Maintainer: Michael Schramm <michael.schramm@ag.tamu.edu>
 Description: An R interface to United States Environmental 
@@ -15,14 +15,14 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.0
-Imports: dplyr, geojsonsf, httr, lubridate, plyr, purrr, readr, tibble,
-        tidyr, utils
+Imports: dplyr, geojsonsf, httr, lubridate, plyr, purrr, readr, rlang,
+        tibble, tidyr, utils
 Suggests: ggplot2, ggmap, ggrepel, here, httptest, kableExtra, knitr,
         rmarkdown, sf, testthat
 BugReports: https://github.com/mps9506/echor/issues
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2018-09-10 21:15:52 UTC; michael.schramm
+Packaged: 2019-02-03 17:34:36 UTC; Michael
 Author: Michael Schramm [aut, cre]
 Repository: CRAN
-Date/Publication: 2018-09-11 05:00:02 UTC
+Date/Publication: 2019-02-03 17:53:31 UTC

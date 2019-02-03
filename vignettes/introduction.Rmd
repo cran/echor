@@ -22,8 +22,21 @@ knitr::opts_chunk$set(
 
 library(kableExtra)
 library(httptest)
+library(dplyr)
 
-path <- here::here("vignettes/introduction")
+path <- here::here("vignettes/int")
+
+api_root <- "https://ofmpub.epa.gov/echo/"
+
+set_redactor(function (response) {
+  response %>%
+    gsub_response(api_root, "", fixed = TRUE)
+})
+
+set_requester(function (request) {
+  request %>%
+    gsub_request(api_root, "", fixed = TRUE)
+})
 
 httptest::start_vignette(path = path)
 ```
@@ -290,6 +303,16 @@ code  string  partial or complete code value
 ```
 
 You can only enter either term or code arguments.
+
+
+Multiple DMRs can be downloaded using a helper function: `downloadDMRs`:
+```{r}
+df <- tibble::tibble(permit = c('TX0119407', 'TX040237'))
+df <- downloadDMRs(df, idColumn = permit)
+df <- tidyr::unnest(df)
+tibble::glimpse(df)
+```
+
 
 ### Spatial data
 `echor` can also return spatial data frames known as simple features (https://r-spatial.github.io/sf/), to facilitate creation of maps. Both `echoAirGetFacilityInfo` and `echoWaterGetFacilityInfo` include arguments to return simple feature dataframes.

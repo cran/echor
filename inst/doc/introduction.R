@@ -11,8 +11,21 @@ knitr::opts_chunk$set(
 
 library(kableExtra)
 library(httptest)
+library(dplyr)
 
-path <- here::here("vignettes/introduction")
+path <- here::here("vignettes/int")
+
+api_root <- "https://ofmpub.epa.gov/echo/"
+
+set_redactor(function (response) {
+  response %>%
+    gsub_response(api_root, "", fixed = TRUE)
+})
+
+set_requester(function (request) {
+  request %>%
+    gsub_request(api_root, "", fixed = TRUE)
+})
 
 httptest::start_vignette(path = path)
 
@@ -65,6 +78,12 @@ knitr::kable(head(df), "html") %>%
 
 ## ------------------------------------------------------------------------
 echoWaterGetParams(term = "Oxygen, dissolved")
+
+## ------------------------------------------------------------------------
+df <- tibble::tibble(permit = c('TX0119407', 'TX040237'))
+df <- downloadDMRs(df, idColumn = permit)
+df <- tidyr::unnest(df)
+tibble::glimpse(df)
 
 ## ----eval=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE---------
 #  ## Sample code only,
