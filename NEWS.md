@@ -1,3 +1,15 @@
+# echor 0.1.3
+
+## Major Changes (possibly breaking)
+
+* `echoGetEffluent()` and `downloadDMRs()` return columns (or nested columns) as characters only.
+
+## Minor changes
+
+* fix vignette (closes #44)
+* import tidyr (v1.0.0)
+* utlize httptest for unit testing
+
 # echor 0.1.2
 
 ## New functions
