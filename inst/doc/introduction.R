@@ -1,4 +1,4 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   fig.asp = 1 / 1.6,
   out.width = "75%",
@@ -29,12 +29,12 @@ set_requester(function (request) {
 
 httptest::start_vignette(path = path)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(echor)
 meta <- echoAirGetMeta()
 meta
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(echor)
 
 ## Retrieve information about facilities within a geographic location
@@ -45,48 +45,48 @@ df <- echoAirGetFacilityInfo(output = "df",
                              ymax = '30.640008',
                              qcolumns = "1,2,3,22,23")
 
-## ----echo=FALSE, message=FALSE, warning=FALSE----------------------------
+## ----echo=FALSE, message=FALSE, warning=FALSE---------------------------------
 knitr::kable(head(df), "html") %>%
   kable_styling() %>%
   scroll_box(width = "500px", height = "200px")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 df <- echoGetCAAPR(p_id = '110000350174')
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 knitr::kable(head(df), "html") %>%
   kable_styling() %>%
   scroll_box(width = "500px", height = "200px")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 df <- echoWaterGetFacilityInfo(xmin = '-96.407563', ymin = '30.554395', 
                                xmax = '-96.25947',  ymax = '30.751984', 
                                output = 'df')
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 knitr::kable(head(df), "html") %>%
   kable_styling() %>%
   scroll_box(width = "500px", height = "200px")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 df <- echoGetEffluent(p_id = 'tx0119407', parameter_code = '50050')
 
-## ----echo=FALSE----------------------------------------------------------
+## ----echo=FALSE---------------------------------------------------------------
 knitr::kable(head(df), "html") %>%
   kable_styling() %>%
   scroll_box(width = "500px", height = "200px")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 echoWaterGetParams(term = "Oxygen, dissolved")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 df <- tibble::tibble(permit = c('TX0119407', 'TX040237'))
 df <- downloadDMRs(df, idColumn = permit)
 df <- df %>%
   tidyr::unnest(dmr)
 tibble::glimpse(df)
 
-## ----eval=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE---------
+## ----eval=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE--------------
 #  ## Sample code only,
 #  ## This example requires the development
 #  ## version of ggplot2 with support for
@@ -128,6 +128,6 @@ tibble::glimpse(df)
 #         title = "NPDES permits near Texas A&M",
 #         caption = "Source: EPA ECHO database")
 
-## ----include = FALSE-----------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 httptest::end_vignette()
 
