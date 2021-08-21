@@ -66,19 +66,19 @@ However, arguments can be looked up here:
                                    p_ptype = "NPD")
 
     head(df)
-    #> [90m# A tibble: 3 x 26[39m
+    #> # A tibble: 3 x 26
     #>   CWPName SourceID CWPStreet CWPCity CWPState CWPStateDistrict CWPZip
-    #>   [3m[90m<chr>[39m[23m   [3m[90m<chr>[39m[23m    [3m[90m<chr>[39m[23m     [3m[90m<chr>[39m[23m   [3m[90m<chr>[39m[23m    [3m[90m<chr>[39m[23m            [3m[90m<chr>[39m[23m 
-    #> [90m1[39m CENTRA… TX00027… 222 IREL… COLLEG… TX       09               77843 
-    #> [90m2[39m HEAT T… TX01065… 0.25MI S… COLLEG… TX       09               77845 
-    #> [90m3[39m TURKEY… TX00624… 3000FT W… BRYAN   TX       09               77807 
-    #> [90m# … with 19 more variables: MasterExternalPermitNmbr [3m[90m<chr>[90m[23m, RegistryID [3m[90m<chr>[90m[23m,[39m
-    #> [90m#   CWPCounty [3m[90m<chr>[90m[23m, CWPEPARegion [3m[90m<chr>[90m[23m, FacDerivedHuc [3m[90m<chr>[90m[23m, FacLat [3m[90m<dbl>[90m[23m,[39m
-    #> [90m#   FacLong [3m[90m<dbl>[90m[23m, CWPTotalDesignFlowNmbr [3m[90m<dbl>[90m[23m,[39m
-    #> [90m#   CWPActualAverageFlowNmbr [3m[90m<dbl>[90m[23m, ReceivingMs4Name [3m[90m<chr>[90m[23m,[39m
-    #> [90m#   AssociatedPollutant [3m[90m<chr>[90m[23m, MsgpPermitType [3m[90m<chr>[90m[23m, CWPPermitStatusDesc [3m[90m<chr>[90m[23m,[39m
-    #> [90m#   CWPPermitTypeDesc [3m[90m<chr>[90m[23m, CWPIssueDate [3m[90m<date>[90m[23m, CWPEffectiveDate [3m[90m<date>[90m[23m,[39m
-    #> [90m#   CWPExpirationDate [3m[90m<date>[90m[23m, CWPSNCStatusDate [3m[90m<date>[90m[23m, StateAuthGen [3m[90m<chr>[90m[23m[39m
+    #>   <chr>   <chr>    <chr>     <chr>   <chr>    <chr>            <chr> 
+    #> 1 CENTRA… TX00027… 222 IREL… COLLEG… TX       09               77843 
+    #> 2 HEAT T… TX01065… 0.25MI S… COLLEG… TX       09               77845 
+    #> 3 TURKEY… TX00624… 3000FT W… BRYAN   TX       09               77807 
+    #> # … with 19 more variables: MasterExternalPermitNmbr <chr>, RegistryID <chr>,
+    #> #   CWPCounty <chr>, CWPEPARegion <chr>, FacDerivedHuc <chr>, FacLat <dbl>,
+    #> #   FacLong <dbl>, CWPTotalDesignFlowNmbr <dbl>,
+    #> #   CWPActualAverageFlowNmbr <dbl>, ReceivingMs4Name <chr>,
+    #> #   AssociatedPollutant <chr>, MsgpPermitType <chr>, CWPPermitStatusDesc <chr>,
+    #> #   CWPPermitTypeDesc <chr>, CWPIssueDate <date>, CWPEffectiveDate <date>,
+    #> #   CWPExpirationDate <date>, CWPSNCStatusDate <date>, StateAuthGen <chr>
 
 The ECHO database can provide over 270 different columns. echor returns
 a subset of these columns that should work for most users. However, you
@@ -97,12 +97,12 @@ plant name, 8-digit HUC, latitude, longitude, and total design flow.
                                    qcolumns = '1,14,23,24,25',
                                    p_ptype = "NPD")
     head(df)
-    #> [90m# A tibble: 3 x 6[39m
+    #> # A tibble: 3 x 6
     #>   CWPName            SourceID  FacDerivedHuc FacLat FacLong CWPTotalDesignFlowN…
-    #>   [3m[90m<chr>[39m[23m              [3m[90m<chr>[39m[23m     [3m[90m<chr>[39m[23m          [3m[90m<dbl>[39m[23m   [3m[90m<dbl>[39m[23m                [3m[90m<dbl>[39m[23m
-    #> [90m1[39m CENTRAL UTILITY P… TX0002747 12070103        30.6   -[31m96[39m[31m.[39m[31m3[39m                 0.93
-    #> [90m2[39m HEAT TRANSFER RES… TX0106526 12070101        30.6   -[31m96[39m[31m.[39m[31m4[39m                [31mNA[39m   
-    #> [90m3[39m TURKEY CREEK WWTP  TX0062472 12070101        30.6   -[31m96[39m[31m.[39m[31m4[39m                 0.75
+    #>   <chr>              <chr>     <chr>          <dbl>   <dbl>                <dbl>
+    #> 1 CENTRAL UTILITY P… TX0002747 12070103        30.6   -96.3                 0.93
+    #> 2 HEAT TRANSFER RES… TX0106526 12070101        30.6   -96.4                NA   
+    #> 3 TURKEY CREEK WWTP  TX0062472 12070101        30.6   -96.4                 0.75
 
 When returned as sf dataframes, the data is suitable for immediate
 spatial plotting or analysis:
@@ -180,14 +180,14 @@ Session Info
     sessioninfo::platform_info()
     #>  setting  value                       
     #>  version  R version 4.0.2 (2020-06-22)
-    #>  os       macOS Catalina 10.15.6      
-    #>  system   x86_64, darwin17.0          
+    #>  os       Ubuntu 18.04.4 LTS          
+    #>  system   x86_64, linux-gnu           
     #>  ui       X11                         
     #>  language (EN)                        
-    #>  collate  en_US.UTF-8                 
-    #>  ctype    en_US.UTF-8                 
+    #>  collate  C.UTF-8                     
+    #>  ctype    C.UTF-8                     
     #>  tz       UTC                         
-    #>  date     2020-08-04
+    #>  date     2020-08-17
     sessioninfo::package_info()
     #>  package     * version date       lib source        
     #>  abind         1.4-5   2016-07-21 [1] CRAN (R 4.0.2)
@@ -198,14 +198,14 @@ Session Info
     #>  codetools     0.2-16  2018-12-24 [2] CRAN (R 4.0.2)
     #>  colorspace    1.4-1   2019-03-18 [1] CRAN (R 4.0.2)
     #>  crayon        1.3.4   2017-09-16 [1] CRAN (R 4.0.2)
-    #>  curl          4.3     2019-12-02 [1] CRAN (R 4.0.1)
+    #>  curl          4.3     2019-12-02 [1] CRAN (R 4.0.2)
     #>  DBI           1.1.0   2019-12-15 [1] CRAN (R 4.0.2)
     #>  digest        0.6.25  2020-02-23 [1] CRAN (R 4.0.2)
     #>  dplyr       * 1.0.1   2020-07-31 [1] CRAN (R 4.0.2)
     #>  e1071         1.7-3   2019-11-26 [1] CRAN (R 4.0.2)
-    #>  echor       * 0.1.4   2020-01-29 [1] CRAN (R 4.0.2)
+    #>  echor       * 0.1.5   2020-08-05 [1] CRAN (R 4.0.2)
     #>  ellipsis      0.3.1   2020-05-15 [1] CRAN (R 4.0.2)
-    #>  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.1)
+    #>  evaluate      0.14    2019-05-28 [1] CRAN (R 4.0.2)
     #>  extrafont   * 0.17    2014-12-08 [1] CRAN (R 4.0.2)
     #>  extrafontdb   1.0     2012-06-11 [1] CRAN (R 4.0.2)
     #>  fansi         0.4.1   2020-01-08 [1] CRAN (R 4.0.2)
@@ -240,7 +240,7 @@ Session Info
     #>  raster        3.3-13  2020-07-17 [1] CRAN (R 4.0.2)
     #>  Rcpp          1.0.5   2020-07-06 [1] CRAN (R 4.0.2)
     #>  readr         1.3.1   2018-12-21 [1] CRAN (R 4.0.2)
-    #>  rgdal         1.5-12  2020-06-26 [1] CRAN (R 4.0.2)
+    #>  rgdal         1.5-16  2020-08-07 [1] CRAN (R 4.0.2)
     #>  rlang         0.4.7   2020-07-09 [1] CRAN (R 4.0.2)
     #>  rmarkdown     2.3     2020-06-18 [1] CRAN (R 4.0.2)
     #>  rosm          0.2.5   2019-07-22 [1] CRAN (R 4.0.2)
@@ -262,5 +262,5 @@ Session Info
     #>  xfun          0.16    2020-07-24 [1] CRAN (R 4.0.2)
     #>  yaml          2.2.1   2020-02-01 [1] CRAN (R 4.0.2)
     #> 
-    #> [1] /Users/runner/work/_temp/Library
-    #> [2] /Library/Frameworks/R.framework/Versions/4.0/Resources/library
+    #> [1] /home/runner/work/_temp/Library
+    #> [2] /opt/R/4.0.2/lib/R/library

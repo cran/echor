@@ -1,3 +1,11 @@
+# echor 0.1.6
+
+## Bug Fixes
+
+* Removed TidyData in DESCRIPTION.
+* Fix output for `echoGetCAAPR()`.
+* Update base URL used in webservice.
+
 # echor 0.1.5
 
 ## Minor Changes
