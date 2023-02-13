@@ -17,8 +17,8 @@
                 "AIRCity": "WILMINGTON",
                 "AIRState": "NC",
                 "RegistryID": "110000350174",
-                "AIRLastStckDateEPA": null,
-                "CollectionMethod": "ADDRESS MATCHING-HOUSE NUMBER"
+                "AIRFacilityTypeCode": "POF",
+                "NaStatusNaa": null
             }
         }
     ]

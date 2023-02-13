@@ -91,6 +91,7 @@ requestURL <- function(path, query) {
 #' @return Returns a dataframe
 #' @import httr
 #' @importFrom readr read_csv locale
+#' @importFrom rlang is_error
 #' @keywords internal
 #' @noRd
 getDownload <- function(service, qid, qcolumns, col_types = NULL) {
@@ -111,6 +112,7 @@ getDownload <- function(service, qid, qcolumns, col_types = NULL) {
   ## Make the request
   request <- httr::RETRY("GET", getURL)
 
+
   ## Check for valid response for serve, else returns error
   resp_check(request)
 
@@ -118,7 +120,7 @@ getDownload <- function(service, qid, qcolumns, col_types = NULL) {
 
   info <- readr::read_csv(info, col_names = TRUE,
                   col_types = col_types,
-                  na = " ",
+                  #na = " ", ## new readr seems to parse this correctly
                   locale = readr::locale(date_format = "%m/%d/%Y"))
 
   return(info)
@@ -195,11 +197,11 @@ insertQColumns <- function(valuesList) {
 columnsToParse <- function(program, colNums) {
 
   if (program == "caa") {
-    meta <- httr::content(httr::GET(url = "https://ofmpub.epa.gov/echo/air_rest_services.metadata?output=JSON"))
+    meta <- httr::content(httr::GET(url = "https://echodata.epa.gov/echo/air_rest_services.metadata?output=JSON"))
   } else if (program == "cwa") {
-    meta <- httr::content(httr::GET(url = "https://ofmpub.epa.gov/echo/cwa_rest_services.metadata?output=JSON"))
+    meta <- httr::content(httr::GET(url = "https://echodata.epa.gov/echo/cwa_rest_services.metadata?output=JSON"))
   } else if (program == "sdw") {
-    meta <- httr::content(httr::GET(url = "https://ofmpub.epa.gov/echo/sdw_rest_services.metadata?output=JSON"))
+    meta <- httr::content(httr::GET(url = "https://echodata.epa.gov/echo/sdw_rest_services.metadata?output=JSON"))
   } else {
     stop("Incorrect argument specified in columnsToParse(). program should be a character == to 'caa', 'cwa', or 'sdw'")}
 
@@ -236,6 +238,32 @@ resp_check <- function(response) {
   else if(response$status_code == 429) {
     stop("Too many requests. Please wait.", call. = FALSE)
   }
+  else if(response$status_code == 503) {
+    stop("The service is unavailable, try again later.", call. = FALSE)
+  }
   else {stop_for_status(response)
   }
+}
+
+
+
+#' Check connectivity
+#'
+#' @param host a string with a hostname
+#'
+#' @return logical value
+#' @keywords internal
+#' @noRd
+#' @importFrom curl nslookup
+has_internet_2 <- function(host) {
+  !is.null(nslookup(host, error = FALSE))
+}
+
+
+check_connectivity <- function() {
+  ## check connectivity
+  if (!has_internet_2("echodata.epa.gov")) {
+    message("No connection to echodata.epa.gov available")
+    return(invisible(NULL))
+  } else {TRUE}
 }
