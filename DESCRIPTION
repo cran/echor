@@ -1,7 +1,7 @@
 Package: echor
 Type: Package
 Title: Access EPA 'ECHO' Data
-Version: 0.1.7
+Version: 0.1.8
 Authors@R: 
     person(given = "Michael",
            family = "Schramm",
@@ -28,8 +28,8 @@ Language: en-US
 Config/Needs/website: mps9506/mpsTemplates, ggplot2, ggrepel,
         ggspatial, here, kableExtra, knitr, raster, rmarkdown, sf
 NeedsCompilation: no
-Packaged: 2023-02-13 14:38:36 UTC; michael.schramm
+Packaged: 2023-04-23 13:55:21 UTC; michael.schramm
 Author: Michael Schramm [aut, cre, cph]
     (<https://orcid.org/0000-0003-1876-6592>)
 Repository: CRAN
-Date/Publication: 2023-02-13 16:40:05 UTC
+Date/Publication: 2023-04-23 15:00:02 UTC
