@@ -1,7 +1,7 @@
 Package: echor
 Type: Package
 Title: Access EPA 'ECHO' Data
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: 
     person(given = "Michael",
            family = "Schramm",
@@ -19,8 +19,8 @@ Description: An R interface to United States Environmental
 License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.2.3
-Imports: curl, dplyr, geojsonsf, httr, plyr, progress, purrr, readr,
-        rlang, tibble, tidyr (>= 1.0.0), utils
+Imports: curl, dplyr, httr, plyr, progress, purrr, readr, rlang, sf,
+        tibble, tidyr (>= 1.0.0), utils
 Suggests: httptest, testthat, utf8
 BugReports: https://github.com/mps9506/echor/issues
 URL: https://github.com/mps9506/echor, https://mps9506.github.io/echor/
@@ -28,8 +28,8 @@ Language: en-US
 Config/Needs/website: mps9506/mpsTemplates, ggplot2, ggrepel,
         ggspatial, here, kableExtra, knitr, raster, rmarkdown, sf
 NeedsCompilation: no
-Packaged: 2023-04-23 13:55:21 UTC; michael.schramm
+Packaged: 2023-06-20 23:27:50 UTC; michael.schramm
 Author: Michael Schramm [aut, cre, cph]
     (<https://orcid.org/0000-0003-1876-6592>)
 Repository: CRAN
-Date/Publication: 2023-04-23 15:00:02 UTC
+Date/Publication: 2023-06-22 17:20:02 UTC
